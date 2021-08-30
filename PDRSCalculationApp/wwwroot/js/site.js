@@ -29,11 +29,11 @@ $(() => {
             method: "GET",
             success: (result) => {
                 if (result.Progress === 100)
-                    $("#status").html("Calculation is completed, calculated value is: " + result.Amount + ". Click on Start button calculate the next amount.");
+                    $("#status").html("Multiplication is completed, multiplied value is: <strong>" + result.Amount + "</strong>. <br>Click on the <strong>Start</strong> button to multiply the next amount.");
                 else if (result.Status === "Failed")
-                    $("#status").html("Calculation failed, please try again or contact support team");
+                    $("#status").html("Multiplication failed, please try again or contact support team");
                 else
-                    $("#status").html("Calculation is in progress: " + result.Progress + "% completed");
+                    $("#status").html("Multiplication is in progress: <strong>" + result.Progress + "%</strong> completed");
             },
             error: (error) => {
                 console.log(error);
@@ -42,6 +42,7 @@ $(() => {
     }
     
     $("#btnCalculate").click(function () {
+        $('#btnCalculate').prop('disabled', true);
         var amount = $('#txtAmount').val();        
         const procurementAmount = { Amount: parseFloat(amount)};
 

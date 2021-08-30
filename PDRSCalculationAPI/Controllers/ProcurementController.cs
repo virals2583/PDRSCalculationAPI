@@ -14,12 +14,12 @@ namespace PDRSCalculationAPI.Controllers
     [EnableCors("MyCorsPolicy")]
     public class ProcurementController : ControllerBase
     {
-        private ProcurementServices _procurementServices;
+        private ProcurementService _procurementServices;
         private readonly IHubContext<ServerSignalR> _serverSignalR;        
 
         public ProcurementController(PDRSDataContext dbContext, IHubContext<ServerSignalR> serverSignalR)
         {
-            _procurementServices = new ProcurementServices(dbContext);
+            _procurementServices = new ProcurementService(dbContext);
             _serverSignalR = serverSignalR;
         }
 
@@ -34,7 +34,21 @@ namespace PDRSCalculationAPI.Controllers
         [HttpPost]
         public async Task Calculate(ProcurementAmount procurementAmount)
         {
-            await _procurementServices.Calculate(_serverSignalR, procurementAmount.Amount);
+            var procurement = await _procurementServices.GetFirstProcurement();
+            try
+            {                
+                for (var cnt = 1; cnt <= 5; cnt++)
+                {
+                    await _procurementServices.CalculateAndUpdate(procurement, procurementAmount.Amount, cnt);
+                    await _serverSignalR.Clients.All.SendAsync("UpdateStatus");
+                    await Task.Delay(5000);
+                }
+            }
+            catch
+            {
+                procurement.Status = "Failed";
+                await _procurementServices.UpdateProcurement(procurement);
+            }
         }
     }
 }
