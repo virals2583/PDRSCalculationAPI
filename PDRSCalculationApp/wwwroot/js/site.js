@@ -2,9 +2,20 @@
 
 $(() => {
 
+    var siteUrl = "https://localhost:44354/";
+
+    $('#txtAmount').bind('input', function () {
+        if ($(this).val() !== '') {
+            $('#btnCalculate').prop('disabled', false);
+        }
+        else {
+            $('#btnCalculate').prop('disabled', true);
+        }
+    });
+
     GetStatus();
 
-    var signalRConnection = new signalR.HubConnectionBuilder().withUrl("https://localhost:44354/serverSignalR").build();
+    var signalRConnection = new signalR.HubConnectionBuilder().withUrl(siteUrl + "serverSignalR").build();
     signalRConnection.start({ withCredentials: false });
     signalRConnection.on("UpdateStatus", function () {
         GetStatus();
@@ -14,11 +25,15 @@ $(() => {
 
     function GetStatus() {
         $.ajax({
-            url: "https://localhost:44354/api/Procurement/GetStatus",
+            url: siteUrl + "api/Procurement/GetStatus",
             method: "GET",
             success: (result) => {
-                console.log(result);
-                $("#status").html(result);
+                if (result.Progress === 100)
+                    $("#status").html("Calculation is completed, calculated value is: " + result.Amount + ". Click on Start button calculate the next amount.");
+                else if (result.Status === "Failed")
+                    $("#status").html("Calculation failed, please try again or contact support team");
+                else
+                    $("#status").html("Calculation is in progress: " + result.Progress + "% completed");
             },
             error: (error) => {
                 console.log(error);
@@ -27,9 +42,18 @@ $(() => {
     }
     
     $("#btnCalculate").click(function () {
-        $.ajax({
-            url: "https://localhost:44354/api/Procurement/Calculate",
-            method: "GET",
+        var amount = $('#txtAmount').val();        
+        const procurementAmount = { Amount: parseFloat(amount)};
+
+        $.ajax({            
+            type: "POST",            
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            dataType: "json",            
+            url: siteUrl + "api/Procurement/Calculate",
+            data: JSON.stringify(procurementAmount),            
             success: (result) => {
                 console.log(result);
             },

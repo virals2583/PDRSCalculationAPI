@@ -1,54 +1,40 @@
 ﻿using Microsoft.AspNetCore.Cors;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using PDRSCalculationAPI.Entity;
 using PDRSCalculationAPI.Hub;
-using PDRSCalculationAPI.ViewModels;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using PDRSCalculationAPI.Models;
+using PDRSCalculationAPI.Services;
 using System.Threading.Tasks;
 
 namespace PDRSCalculationAPI.Controllers
-{    
+{
     [ApiController]
     [Route("api/[controller]")]
     [EnableCors("MyCorsPolicy")]
     public class ProcurementController : ControllerBase
     {
+        private ProcurementServices _procurementServices;
         private readonly IHubContext<ServerSignalR> _serverSignalR;        
-        public ProcurementController(IHubContext<ServerSignalR> serverSignalR)
-        {            
+
+        public ProcurementController(PDRSDataContext dbContext, IHubContext<ServerSignalR> serverSignalR)
+        {
+            _procurementServices = new ProcurementServices(dbContext);
             _serverSignalR = serverSignalR;
         }
 
         [Route("GetStatus")]
         [HttpGet]
-        public ProcurementStatusViewModel GetStatus()
+        public async Task<Procurement> GetStatus()
         {
-            var procurementStatusViewModel = new ProcurementStatusViewModel
-            {
-                Status = "Not Started",
-                Progress = 0,
-                Amount = 0
-            };
-
-            if (string.IsNullOrEmpty(HttpContext.Session.GetString("Status")))
-            {                
-                HttpContext.Session.SetString("Status", "In Progress");
-            }
-
-            var status = HttpContext.Session.GetString("Status");
-            //procurementStatusViewModel = HttpContext.Session.Get<ProcurementStatusViewModel>("Status");
-            return procurementStatusViewModel;
+            return await _procurementServices.GetFirstProcurement();
         }
 
         [Route("Calculate")]        
-        [HttpGet]
-        public async Task Calculate()
-        {            
-            HttpContext.Session.SetString("Status", "Completed");
-            await _serverSignalR.Clients.All.SendAsync("UpdateStatus");            
+        [HttpPost]
+        public async Task Calculate(ProcurementAmount procurementAmount)
+        {
+            await _procurementServices.Calculate(_serverSignalR, procurementAmount.Amount);
         }
     }
 }

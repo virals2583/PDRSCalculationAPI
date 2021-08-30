@@ -1,27 +1,23 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
+using PDRSCalculationAPI.Entity;
 using PDRSCalculationAPI.Hub;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace PDRSCalculationAPI
 {
     public class Startup
     {
 
+        private readonly IConfiguration _configuration;
         readonly string MyAllowSpecificOrigins = "MyCorsPolicy";
         public Startup(IConfiguration configuration)
         {
-            Configuration = configuration;
+            _configuration = configuration;
         }
 
         public IConfiguration Configuration { get; }
@@ -30,18 +26,8 @@ namespace PDRSCalculationAPI
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDistributedMemoryCache();
-            services.AddSession(options =>
-            {
-                // Set a short timeout for easy testing.
-                options.IdleTimeout = TimeSpan.FromSeconds(10);
-                options.Cookie.HttpOnly = true;
-            });
+            services.AddDbContext<PDRSDataContext>(options => options.UseSqlServer(_configuration.GetConnectionString("DefaultConnection")));
 
-            //services.AddSession(options => {
-            //    options.IdleTimeout = TimeSpan.FromMinutes(30);
-            //    options.Cookie.HttpOnly = true;
-            //    options.Cookie.IsEssential = true;
-            //});
 
             services.Configure<CookiePolicyOptions>(options =>
             {
@@ -83,8 +69,7 @@ namespace PDRSCalculationAPI
             {
                 app.UseDeveloperExceptionPage();
             }
-
-            app.UseSession();
+            
             app.UseHttpsRedirection();
             app.UseRouting();            
 
@@ -94,8 +79,7 @@ namespace PDRSCalculationAPI
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
-            {
-                //endpoints.MapControllers();
+            {                
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "api/{controller}/{id}");
