@@ -28,10 +28,14 @@ $(() => {
             url: siteUrl + "api/Procurement/GetStatus",
             method: "GET",
             success: (result) => {
-                if (result.Progress === 100)
+                if (result.Progress === 100) {
                     $("#status").html("Multiplication is completed, multiplied value is: <strong>" + result.Amount + "</strong>. <br>Click on the <strong>Start</strong> button to multiply the next amount.");
-                else if (result.Status === "Failed")
+                    $('#btnCalculate').prop('disabled', false);
+                }
+                else if (result.Status === "Failed") {
                     $("#status").html("Multiplication failed, please try again or contact support team");
+                    $('#btnCalculate').prop('disabled', false);
+                }
                 else
                     $("#status").html("Multiplication is in progress: <strong>" + result.Progress + "%</strong> completed");
             },
@@ -56,10 +60,11 @@ $(() => {
             url: siteUrl + "api/Procurement/Calculate",
             data: JSON.stringify(procurementAmount),            
             success: (result) => {
-                console.log(result);
+                $('#btnCalculate').prop('disabled', false);
             },
-            error: (error) => {
+            error: (error) => {                
                 console.log(error);
+                $('#btnCalculate').prop('disabled', false);
             }
         })
     })

@@ -7,7 +7,7 @@ namespace PDRSCalculationAPI.Entity
         public PDRSDataContext(DbContextOptions<PDRSDataContext> options) : base(options)
         {
 
-        }
+        }        
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
